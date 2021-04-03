@@ -12,7 +12,5 @@ RUN apt-get update && \
     mkdir /home/jenkins/jenk && \
     chown -R jenkins /home/jenkins/jenk && \
     usermod -aG sudo jenkins
-RUN service ssh restart
 
-CMD [ "tail", "-f", "/dev/null" ]
-
+CMD service ssh restart ; tail -f /dev/null
