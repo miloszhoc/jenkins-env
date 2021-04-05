@@ -23,6 +23,8 @@ services:
 
   selenium_hub:
     image: selenium/hub:3.141.59
+    expose:
+      - "4444"
     ports:
       - "4444:4444"
     environment:
@@ -36,8 +38,10 @@ services:
       - /dev/shm:/dev/shm
     depends_on:
       - selenium_hub
+    expose:
+      - "5555"
     ports:
-      - "5901:5901"
+      - "5555:5555"
     networks:
       network1:
         ipv4_address: 172.16.1.5
@@ -48,14 +52,19 @@ services:
       - SCREEN_HEIGHT=1080
       - SCREEN_DEPTH=24
       - GRID_BROWSER_TIMEOUT=300
+      - NODE_PORT=5555
   selenium_chrome2:
     image: selenium/node-chrome-debug:3.141.59
     volumes:
       - /dev/shm:/dev/shm
     depends_on:
       - selenium_hub
+    expose:
+      - "5900"
+      - "5556"
     ports:
-      - "5902:5902"
+      - "5900:5900"
+      - "5556:5556"
     networks:
       network1:
         ipv4_address: 172.16.1.6
@@ -67,6 +76,7 @@ services:
       - SCREEN_DEPTH=24
       - GRID_BROWSER_TIMEOUT=300
       - VNC_NO_PASSWORD=1
+      - NODE_PORT=5556
 
 networks:
   network1:
