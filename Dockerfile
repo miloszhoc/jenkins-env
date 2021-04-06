@@ -12,6 +12,7 @@ RUN apt-get update && \
     echo "jenkins:jenkins_password" | chpasswd && \
     mkdir /home/jenkins/jenk && \
     chown -R jenkins /home/jenkins/jenk && \
-    usermod -aG sudo jenkins
+    usermod -aG sudo jenkins && \
+    python3.8 -m pip install docker-compose
 
 CMD service ssh restart ; tail -f /dev/null
