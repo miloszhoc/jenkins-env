@@ -53,6 +53,8 @@ services:
       - SCREEN_DEPTH=24
       - GRID_BROWSER_TIMEOUT=300
       - NODE_PORT=5555
+      - NODE_APPLICATION_NAME=w1
+
   selenium_chrome2:
     image: selenium/node-chrome-debug:3.141.59
     volumes:
@@ -77,6 +79,7 @@ services:
       - GRID_BROWSER_TIMEOUT=300
       - VNC_NO_PASSWORD=1
       - NODE_PORT=5556
+      - NODE_APPLICATION_NAME=w2_debug
 
 networks:
   network1:
