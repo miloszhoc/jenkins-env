@@ -3,7 +3,7 @@ Configuration contains:
 
 * Jenkins,
 * Jenkins Node,
-* Selenium Grid (hub and two Chrome nodes including one for debugging) for executing E2E tests.
+* Selenium Grid (hub and two Chrome nodes) for executing E2E tests.
 
 # Installation - Jenkins Node
 
@@ -42,8 +42,6 @@ After executing `` docker-compose up -d `` selenium nodes should automatically c
 # Additional info
 
 Selenium Hub is available on 4444 port.    
-Jenkins is available on 8080 port.    
-You can connect to debug node using VNC viewer via 5900 port.    
-If you want to run e2e tests on debug grid node set "applicationName" capability to ``w2_debug``    
+Jenkins is available on 8080 port.     
 If you want to see details about containers network addresses check docker-compose.yml file.   
 If you want to change credentials of Jenkins node container check Dockerfile.

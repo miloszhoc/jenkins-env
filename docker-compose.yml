@@ -21,69 +21,129 @@ services:
     depends_on:
       - jenkins_master
 
-  selenium_hub:
-    image: selenium/hub:3.141.59
-    expose:
-      - "4444"
+  selenium-event-bus:
+    image: selenium/event-bus:4.1.1-20211217
+    container_name: selenium-event-bus
     ports:
-      - "4444:4444"
-    environment:
-      - GRID_BROWSER_TIMEOUT=300
+      - "4442:4442"
+      - "4443:4443"
+      - "5557:5557"
     networks:
-      network1:
+      network2:
         ipv4_address: 172.16.1.4
-  selenium_chrome1:
-    image: selenium/node-chrome:3.141.59
-    volumes:
-      - /dev/shm:/dev/shm
-    depends_on:
-      - selenium_hub
-    expose:
-      - "5555"
-    ports:
-      - "5555:5555"
-    networks:
-      network1:
-        ipv4_address: 172.16.1.5
-    environment:
-      - HUB_HOST=selenium_hub
-      - TZ=CET
-      - SCREEN_WIDTH=1920
-      - SCREEN_HEIGHT=1080
-      - SCREEN_DEPTH=24
-      - GRID_BROWSER_TIMEOUT=300
-      - NODE_PORT=5555
-      - NODE_APPLICATION_NAME=w1
 
-  selenium_chrome2:
-    image: selenium/node-chrome-debug:3.141.59
-    volumes:
-      - /dev/shm:/dev/shm
-    depends_on:
-      - selenium_hub
-    expose:
-      - "5900"
-      - "5556"
+  selenium-sessions:
+    image: selenium/sessions:4.1.1-20211217
+    container_name: selenium-sessions
     ports:
-      - "5900:5900"
       - "5556:5556"
     networks:
-      network1:
-        ipv4_address: 172.16.1.6
+      network2:
+        ipv4_address: 172.16.1.5
+    depends_on:
+      - selenium-event-bus
     environment:
-      - HUB_HOST=selenium_hub
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-session-queue:
+    image: selenium/session-queue:4.1.1-20211217
+    container_name: selenium-session-queue
+    ports:
+      - "5559:5559"
+    networks:
+      network2:
+        ipv4_address: 172.16.1.6
+    depends_on:
+      - selenium-event-bus
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+
+  selenium-distributor:
+    image: selenium/distributor:4.1.1-20211217
+    container_name: selenium-distributor
+    ports:
+      - "5553:5553"
+    networks:
+      network2:
+        ipv4_address: 172.16.1.7
+    depends_on:
+      - selenium-event-bus
+      - selenium-sessions
+      - selenium-session-queue
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_SESSIONS_MAP_HOST=selenium-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=selenium-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  selenium-router:
+    image: selenium/router:4.1.1-20211217
+    container_name: selenium-router
+    ports:
+      - "4444:4444"
+    networks:
+      network2:
+        ipv4_address: 172.16.1.8
+    depends_on:
+      - selenium-distributor
+      - selenium-sessions
+      - selenium-session-queue
+    environment:
+      - SE_DISTRIBUTOR_HOST=selenium-distributor
+      - SE_DISTRIBUTOR_PORT=5553
+      - SE_SESSIONS_MAP_HOST=selenium-sessions
+      - SE_SESSIONS_MAP_PORT=5556
+      - SE_SESSION_QUEUE_HOST=selenium-session-queue
+      - SE_SESSION_QUEUE_PORT=5559
+
+  chrome1:
+    image: selenium/node-chrome:4.1.1-20211217
+    shm_size: 2gb
+    depends_on:
+      - selenium-event-bus
+    networks:
+      network2:
+        ipv4_address: 172.16.1.9
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
       - TZ=CET
       - SCREEN_WIDTH=1920
       - SCREEN_HEIGHT=1080
       - SCREEN_DEPTH=24
       - GRID_BROWSER_TIMEOUT=300
-      - VNC_NO_PASSWORD=1
-      - NODE_PORT=5556
-      - NODE_APPLICATION_NAME=w2_debug
+      - NODE_APPLICATION_NAME=w1
+
+  chrome2:
+    image: selenium/node-chrome:4.1.1-20211217
+    shm_size: 2gb
+    depends_on:
+      - selenium-event-bus
+    networks:
+      network2:
+        ipv4_address: 172.16.1.10
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-event-bus
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - TZ=CET
+      - SCREEN_WIDTH=1920
+      - SCREEN_HEIGHT=1080
+      - SCREEN_DEPTH=24
+      - GRID_BROWSER_TIMEOUT=300
+      - NODE_APPLICATION_NAME=w2
 
 networks:
-  network1:
+  network2:
     ipam:
       driver: default
       config:
-        - subnet: "172.16.0.0/16"
+        - subnet: 172.16.0.0/16
